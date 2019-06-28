@@ -130,6 +130,8 @@
     cell.posterView.image = nil;
     [cell.posterView setImageWithURL:posterURL];
     
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
     return cell;
 }
 
