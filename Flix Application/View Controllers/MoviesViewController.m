@@ -11,7 +11,7 @@
 #import "UIImageView+AFNetworking.h"
 #import "DetailsViewController.h"
 
-@interface MoviesViewController () <UITableViewDataSource, UITableViewDelegate>
+@interface MoviesViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
 
 @property (nonatomic, strong) NSArray *movies;
 
@@ -21,22 +21,29 @@
 
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicator;
 
+@property (strong, nonatomic) IBOutlet UISearchBar *searchBar;
 
+@property (strong, nonatomic) NSArray *filteredData;
 
 @end
 
 @implementation MoviesViewController
-
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
+    // do any additional setup after loading the view.
     
+    // setup datasource for table view and searchBar
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
+    self.searchBar.delegate = self;
     
+    // populate with movie data
     [self fetchMovies];
     
+    // initialize refresh control
     self.refreshControl = [[UIRefreshControl alloc] init];
+    
+    // configure refresh control
     [self.refreshControl addTarget:self action:@selector(fetchMovies) forControlEvents:UIControlEventValueChanged];
     [self.tableView insertSubview:self.refreshControl atIndex:0];
 
@@ -79,15 +86,16 @@
             [self.activityIndicator stopAnimating];
             
             NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
-            
-            NSLog(@"%@", dataDictionary);
-            
             self.movies = dataDictionary[@"results"];
-            for (NSDictionary *movie in self.movies) {
-                NSLog(@"%@", movie[@"title"]);
-                
-            }
             
+            // set filtered data initially as all movie data
+            self.filteredData = self.movies;
+            // NSLog(@"%@", dataDictionary);
+            
+            
+            // for (NSDictionary *movie in self.movies) {
+                // NSLog(@"%@", movie);
+
             [self.tableView reloadData];
             // TODO: Get the array of movies
             // TODO: Store the movies in a property to use elsewhere
@@ -95,20 +103,22 @@
             
         }
         [self.refreshControl endRefreshing];
-
+//        NSLog(@"%@", self.data);
+        
+    
     }];
     [task resume];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView  numberOfRowsInSection:(NSInteger)section {
-    return self.movies.count;
+    return self.filteredData.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     
-    MovieCell *cell = [tableView dequeueReusableCellWithIdentifier:@"MovieCell"];
+    MovieCell *cell = [tableView dequeueReusableCellWithIdentifier:@"MovieCell" forIndexPath:indexPath];
     
-    NSDictionary *movie = self.movies[indexPath.row];
+    NSDictionary *movie = self.filteredData[indexPath.row];
     cell.titleLabel.text = movie[@"title"];
     cell.synopsisLabel.text = movie[@"overview"];
     
@@ -123,7 +133,32 @@
     return cell;
 }
 
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
+    if (searchText.length != 0) {
+        // Lookup based on movie title
+        NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(NSDictionary *evaluatedObject, NSDictionary *bindings) {
+            return [evaluatedObject[@"title"] containsString:searchText];
+        }];
+        self.filteredData = [self.movies filteredArrayUsingPredicate:predicate];
+        
+    }
+    else {
+        self.filteredData = self.movies;
+    }
     
+    [self.tableView reloadData];
+    
+}
+
+- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar {
+    self.searchBar.showsCancelButton = YES;
+}
+
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    self.searchBar.showsCancelButton = NO;
+    self.searchBar.text = @"";
+    [self.searchBar resignFirstResponder];
+}
 
 #pragma mark - Navigation
 

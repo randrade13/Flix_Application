@@ -26,10 +26,14 @@
     
     self.collectionView.dataSource = self;
     self.collectionView.delegate = self;
+    
+    // Call to update movie info
     [self fetchMovies];
     
+    // Initialize refresh control
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(fetchMovies) forControlEvents:UIControlEventValueChanged];
+    
     [self.collectionView insertSubview:self.refreshControl atIndex:0];
     
     UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *) self.collectionView.collectionViewLayout;
