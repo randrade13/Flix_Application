@@ -43,7 +43,7 @@
 }
 
 - (void)fetchMovies {
-    // Start the activity indicator
+    
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Network Error."
                                                                    message:@"Please connect to a wireless network to load movie information."
                                                             preferredStyle:(UIAlertControllerStyleAlert)];
